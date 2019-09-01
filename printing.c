@@ -170,7 +170,7 @@ void freelist_print(printFormatter pf) {
     return;
   }
 
-  header *freelist = g_freelist_root;
+  header *freelist = g_freelist_head;
   printf("%p\n%p\n", freelist, freelist->next);
   do {
     pf(freelist);

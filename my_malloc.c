@@ -26,7 +26,8 @@ header *g_last_fence_post;
 
 /*
  * Pointer to the next block in the freelist after the block that was last
- * allocated
+ * allocated. If the block pointed to is removed by coalescing, this shouuld be
+ * updated to point to the next block after the removed block.
  */
 header *g_next_allocate;
 
