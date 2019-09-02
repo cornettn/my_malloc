@@ -1,12 +1,11 @@
 SRC=my_malloc.c printing.c
-INC=my_malloc.h
 GCC=gcc -std=gnu11 -Wall -Werror -I"/homes/cs252/public/include"
 
 .PHONY: compile_and_push
 compile_and_push:
 	@#	Compile the source file(s). If successful, push the changes
 	@$(GCC) -c $(SRC) && \
-	(git add $(SRC) $(INC); \
+	(git add $(SRC); \
 	git commit -m "Latest build"; \
 	git push; \
 	echo "Successfully recorded changes")
