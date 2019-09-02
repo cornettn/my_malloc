@@ -44,7 +44,7 @@ static void init(void) __attribute__((constructor));
  */
 static void set_fenceposts(void *mem, size_t size) __attribute__((unused));
 static void insert_free_block(header *h) __attribute__((unused));
-static header * find_header(size_t size) __attribute__((unused));
+static header *find_header(size_t size) __attribute__((unused));
 
 /*
  * TODO: implement first_fit
@@ -189,7 +189,7 @@ static void init() {
  * TODO: implement malloc
  */
 
-void * my_malloc(size_t size) {
+void *my_malloc(size_t size) {
   pthread_mutex_lock(&g_mutex);
   // Insert code here
   pthread_mutex_unlock(&g_mutex);
@@ -204,7 +204,7 @@ void * my_malloc(size_t size) {
  * TODO: implement free
  */
 
-void my_free(void * p) {
+void my_free(void *p) {
   pthread_mutex_lock(&g_mutex);
   // Insert code here
   pthread_mutex_unlock(&g_mutex);

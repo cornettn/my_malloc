@@ -71,7 +71,7 @@ void my_free(void *p);
 
 extern header *g_freelist_head;
 extern header *g_last_fencepost;
-extern header * g_next_allocate;
+extern header *g_next_allocate;
 extern void *g_base;
 
 #endif
