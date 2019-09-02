@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#include "../my_malloc.h"
+#include <my_malloc.h>
 
 static inline header * right_neighbor(header * h)
 {

@@ -1,6 +1,6 @@
 SRC=my_malloc.c printing.c
 INC=my_malloc.h
-GCC=gcc -std=gnu11 -Wall -Werror
+GCC=gcc -std=gnu11 -Wall -Werror -I"/homes/cs252/public/include"
 
 .PHONY: compile_and_push
 compile_and_push:
