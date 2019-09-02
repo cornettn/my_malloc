@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "../my_malloc.h"
+#include "my_malloc.h"
 
 /*
  * Ensures that no memory is allocated before the program begins
@@ -15,7 +15,7 @@ int main()
   assert(sbrk(0) == g_base);
 
   int * arr = (int *) my_malloc(ARENA_SIZE - 2 * ALLOC_HEADER_SIZE);
-
+  assert(arr != NULL);
   assert(((char *)sbrk(0)) == ((char *)g_base) + 2 * ARENA_SIZE);
 
   assert(g_freelist_head->next == NULL);

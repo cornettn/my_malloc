@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include "../my_malloc.h"
-#include "../printing.h"
+#include "my_malloc.h"
+#include "printing.h"
 
 /*
  * Ensure data is written to the correct spot (malloc only)

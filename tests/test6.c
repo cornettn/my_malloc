@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include "../my_malloc.h"
-#include "../printing.h"
+#include "my_malloc.h"
+#include "printing.h"
 
 #define NUM_INTS (4)
 

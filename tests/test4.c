@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include "test_funcs.h"
-#include "../my_malloc.h"
+#include "my_malloc.h"
 
 #define NUM_INTS (4)
 

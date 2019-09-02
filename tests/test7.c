@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include <assert.h>
 
-#include "../my_malloc.h"
-#include "../printing.h"
+#include "my_malloc.h"
+#include "printing.h"
 
 #define NUM_INTS (4)
 
@@ -17,6 +18,7 @@ int main()
 
   for (int i = 0; i < NUM_INTS; i++) {
     arr[i] = (int *) my_malloc(16 * sizeof(int));
+    assert(arr[i] != NULL);
     freelist_print(print_object);
   }
 

@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "../my_malloc.h"
-#include "../printing.h"
+#include "my_malloc.h"
+#include "printing.h"
 
 /*
  * Ensure space is allocated in the correct sizes

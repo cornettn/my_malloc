@@ -1,8 +1,8 @@
 #include <stdio.h>
 
 #include "test_funcs.h"
-#include "../my_malloc.h"
-#include "../printing.h"
+#include "my_malloc.h"
+#include "printing.h"
 
 #define NUM_INTS (6)
 

@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "test_funcs.h"
-#include "../my_malloc.h"
-#include "../printing.h"
+#include "my_malloc.h"
+#include "printing.h"
 
 /*
  * Ensure chunk coalescing is done properly
@@ -15,12 +16,14 @@ int main()
 
   //  Allocate chunk 1
   arr[0] = (int *) my_malloc(ARENA_SIZE - 16 * ALLOC_HEADER_SIZE);
-
+  assert(arr[0] != NULL);
+    
   freelist_print(print_object);
   printf("BREAK\n");
   
   //  Allocate chunk 2 (should coalesce)
   arr[1] = (int *) my_malloc(ARENA_SIZE - 16 * ALLOC_HEADER_SIZE);
+  assert(arr[1] != NULL);
 
   freelist_print(print_object);
   printf("BREAK\n");
@@ -30,6 +33,7 @@ int main()
   sbrk(100);
 
   arr[2] = (int *) my_malloc(ARENA_SIZE - 16 * ALLOC_HEADER_SIZE);
+  assert(arr[2] != NULL);
 
   header * h = (header *) g_base;
 

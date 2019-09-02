@@ -2,7 +2,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <assert.h>
-#include "../my_malloc.h"
+#include "my_malloc.h"
 
 void *__real_sbrk(intptr_t increment);
 
