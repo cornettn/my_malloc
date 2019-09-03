@@ -182,8 +182,18 @@ static void init() {
 
   /* Record the starting address of the heap */
 
-  g_base = sbrk(0);
+  g_base = sbrk(ARENA_SIZE);
 } /* init() */
+
+/*
+ * This function is responsible for getting more space from the OS whenever
+ * necessary.
+ */
+
+void get_more_space() {
+  printf("Getting more space.\n");
+  g_base = sbrk(ARENA_SIZE);
+} /* get_more_space() */
 
 /*
  * TODO: implement malloc
@@ -191,13 +201,19 @@ static void init() {
 
 void *my_malloc(size_t size) {
   pthread_mutex_lock(&g_mutex);
-  // Insert code here
+  printf("Current g_base: %p\n", g_base);
+  get_more_space();
+  printf("Current g_base: %p\n", g_base);
   pthread_mutex_unlock(&g_mutex);
 
+/*
   // Remove this code
   (void) size;
   assert(false);
   exit(1);
+*/
+
+  return NULL;
 } /* my_malloc() */
 
 /*
