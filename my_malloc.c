@@ -185,6 +185,7 @@ static void init() {
   g_base = sbrk(0);
   printf("Initial Value of g_base: %p\n", g_base);
   printf("Initial Address of g_base: %p\n", &g_base);
+  
 } /* init() */
 
 /*
@@ -192,9 +193,10 @@ static void init() {
  * necessary.
  */
 
-void get_more_mem() {
+int get_more_mem() {
   printf("Getting more space: %d more bytes.\n", ARENA_SIZE);
   g_base = sbrk(ARENA_SIZE);
+  return ARENA_SIZE;
 } /* get_more_mem() */
 
 /*
@@ -203,16 +205,21 @@ void get_more_mem() {
 
 void *my_malloc(size_t size) {
   pthread_mutex_lock(&g_mutex);
-  printf("Current value of g_base: %p\n", g_base);
-  printf("Current address of g_base: %p\n", &g_base);
-  get_more_mem();
+  if ( g_freelist_head == NULL) {  
+    int amount_allocated = get_more_mem();
   
-  /* Create the head of the free list in the chunk of space received from 
-   * the OS  */
+    /* Create the head of the free list in the chunk of space received from 
+     * the OS  */
+ 
+    g_freelist_head = g_base;
+    g_freelist_head->size = amount_allocated - sizeof(header*);
+    g_freelist_head->left_size = 0;
+    g_freelist_head->next = NULL;
+    g_freelist_head->prev = NULL;
+    printf("g_freelist_head address: %p\n", g_freelist_head);
+  }
 
-  g_freelist_head = g_base;
-  printf("g_freelist_head address: %p\n", g_freelist_head);
-
+  printf("malloc\n");
   pthread_mutex_unlock(&g_mutex);
 
 /*
