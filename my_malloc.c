@@ -1,12 +1,12 @@
-#include <my_malloc.h>
+#include "my_malloc.h"
 
 #include <pthread.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 /* Pointer to the location of the heap prior to any sbrk calls */
 void *g_base = NULL;
@@ -182,7 +182,7 @@ static void init() {
 
   /* Record the starting address of the heap */
 
-  g_base = sbrk(ARENA_SIZE);
+  g_base = sbrk(0);
 } /* init() */
 
 /*
