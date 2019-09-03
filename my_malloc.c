@@ -190,10 +190,10 @@ static void init() {
  * necessary.
  */
 
-void get_more_space() {
+void get_more_mem() {
   printf("Getting more space.\n");
   g_base = sbrk(ARENA_SIZE);
-} /* get_more_space() */
+} /* get_more_mem() */
 
 /*
  * TODO: implement malloc
@@ -202,7 +202,8 @@ void get_more_space() {
 void *my_malloc(size_t size) {
   pthread_mutex_lock(&g_mutex);
   printf("Current g_base: %p\n", g_base);
-  get_more_space();
+  get_more_mem();
+  //&g_freelist_head = g_base;
   printf("Current g_base: %p\n", g_base);
   pthread_mutex_unlock(&g_mutex);
 
