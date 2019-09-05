@@ -1,4 +1,5 @@
 #include "my_malloc.h"
+#include "printing.h"
 
 #include <pthread.h>
 #include <stdio.h>
@@ -53,9 +54,17 @@ static header *find_header(size_t size) __attribute__((unused));
  */
 
 static header *first_fit(size_t size) {
-  (void) size;
-  assert(false);
-  exit(1);
+  header* current_block = g_freelist_head;
+  while (current_block != NULL) {
+    printf("\tBlock's size: %ld\n\tsize: %ld\n", current_block->size, size);
+    if (current_block->size >= size) {
+      printf("Header Found.\n");
+      return current_block;
+    }
+    current_block = current_block->next;
+  }
+  printf("No header found!\n");
+  return NULL;
 } /* first_fit() */
 
 /*
@@ -183,20 +192,86 @@ static void init() {
   /* Record the starting address of the heap */
 
   g_base = sbrk(0);
-  printf("Initial Value of g_base: %p\n", g_base);
-  printf("Initial Address of g_base: %p\n", &g_base);
-  
 } /* init() */
+
+
+/*
+ * This function will take a header with an appropirate amount of space
+ * and split it to fit exactly that amount.
+ * 
+ * head: The header that is to be split into a smaller size.
+ * size: The size that the header is going to be split to. 
+ *
+ * return: A pointer to the split header.
+ */
+
+header* split_header(header* head, size_t size) {
+return NULL;
+} /* split_header()  */
+
+/*
+ * This function will round up a number to nearest multiple of another
+ * number.
+ *
+ * num_to_round: This is the number that will be rounded up.
+ * multiple: This is the multiple that the num_to_round will be rounded up to.
+ *
+ * return: The rounded up number.
+ */
+
+size_t roundup(size_t num_to_round, size_t multiple) {
+  if (num_to_round < multiple) {
+    num_to_round = multiple;
+  }
+  size_t difference = num_to_round % multiple;
+  if (difference != 0) {
+    num_to_round += (multiple - difference);
+  }
+  return num_to_round;
+} /* roundup() */
 
 /*
  * This function is responsible for getting more space from the OS whenever
  * necessary.
+ *
+ * needed_mem_size: This is the amount of memory that is required from the
+ *   my_malloc() call.
+ *
+ * return: A pointer to the header of the chunk of memory received.
  */
 
-int get_more_mem() {
-  printf("Getting more space: %d more bytes.\n", ARENA_SIZE);
-  g_base = sbrk(ARENA_SIZE);
-  return ARENA_SIZE;
+header* get_more_mem(size_t needed_mem_size) {
+  
+  /*
+   * TODO: Add a check to see if chunks can be coallesed. If they can,
+   * make sure that the fenceposts are updated accordingly.
+   */
+
+  /* Request more memory from the OS */ 
+
+  size_t size = ARENA_SIZE;
+  
+  while (size < needed_mem_size) {
+    size += ARENA_SIZE;
+  }
+  
+  printf("my_malloc: Getting more space: %ld more bytes.\n", size);
+  g_base = sbrk(size);
+
+  /* Set the fenceposts in the new chunk of mem */
+  printf("\tSetting Fenceposts\n"); 
+  set_fenceposts(g_base, size);
+  
+  /* Initialize the header in the new chunk */
+  
+  printf("\tInitializing header\n"); 
+  header* head = g_base;
+  head->size = size - ((size_t) ALLOC_HEADER_SIZE);
+  head->left_size = 0;
+  head->next = NULL;
+  head->prev = NULL;
+  head->data = NULL;
+  return head;
 } /* get_more_mem() */
 
 /*
@@ -205,31 +280,62 @@ int get_more_mem() {
 
 void *my_malloc(size_t size) {
   pthread_mutex_lock(&g_mutex);
-  if ( g_freelist_head == NULL) {  
-    int amount_allocated = get_more_mem();
-  
-    /* Create the head of the free list in the chunk of space received from 
-     * the OS  */
- 
-    g_freelist_head = g_base;
-    g_freelist_head->size = amount_allocated - sizeof(header*);
-    g_freelist_head->left_size = 0;
-    g_freelist_head->next = NULL;
-    g_freelist_head->prev = NULL;
-    printf("g_freelist_head address: %p\n", g_freelist_head);
+  printf("my_malloc\n");
+
+  if (size == 0) {
+    return NULL;
   }
 
-  printf("malloc\n");
+  /* Ensure that the size allocated is a multiple of MIN_ALLOCATION */
+  
+  size = roundup(size, MIN_ALLOCATION);
+
+  /* Ensure that there is enough space for next/prev pointers when this
+   * header is freed */
+
+  size = size + ALLOC_HEADER_SIZE < sizeof(header) ?
+    sizeof(header) - ALLOC_HEADER_SIZE: size;
+
+  if ( g_freelist_head == NULL) {  
+    header* newly_allocated_head = get_more_mem(size);
+    printf("Done Getting Space\n");
+
+    /* Create the head of the free list in the chunk of space received from 
+     * the OS. 
+     *
+     * The g_freelist_head can assigned to the newly allocaed memory because
+     * this is within the section of the code where there is no free list.
+     */
+
+    g_freelist_head = newly_allocated_head;
+    printf("Print Free List\n\n"); 
+    freelist_print(*print_object);
+  }
+  
+
+  /* Look for a header with the proper contraints */
+ 
+  printf("Looking for a header that has at least size %ld bytes\n", size); 
+  header* found_header = find_header(size);
+  if (found_header) {
+    print_object(found_header);
+  }
+  else {
+    get_more_mem(size);
+  }
+
+  // split_header()
+  
+  printf("Before\n");
+  print_status(found_header);
+  print_object(found_header);
+  found_header->size = found_header->size | (state) ALLOCATED;
+  print_status(found_header);
+  print_object(found_header);
+  printf("After\n");
+
   pthread_mutex_unlock(&g_mutex);
-
-/*
-  // Remove this code
-  (void) size;
-  assert(false);
-  exit(1);
-*/
-
-  return NULL;
+  return &found_header->data;
 } /* my_malloc() */
 
 /*

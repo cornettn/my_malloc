@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <my_malloc.h>
-#include <printing.h>
+#include "my_malloc.h"
+#include "printing.h"
 
 #define MALLOC_COLOR "MALLOC_DEBUG_COLOR"
 
