@@ -325,12 +325,8 @@ void *my_malloc(size_t requested_size) {
     sizeof(header) - ALLOC_HEADER_SIZE: needed_size;
 
   if ( g_freelist_head == NULL) {
-    
-    /* Ensure that block of memory that is requested can sustain the 
-     * free list data structure */
-
-    needed_size = requested_size + ALLOC_HEADER_SIZE * 3 > ARENA_SIZE ?
-      requested_size + ALLOC_HEADER_SIZE * 3 : needed_size;
+    needed_size = requested_size + 3 * ALLOC_HEADER_SIZE > ARENA_SIZE ?
+      requested_size + 3 * ALLOC_HEADER_SIZE : needed_size;  
 
     header* newly_allocated_head = get_more_mem(needed_size);
 
@@ -349,6 +345,9 @@ void *my_malloc(size_t requested_size) {
  
   header* found_header = find_header(requested_size);
   if (!found_header) {
+    needed_size = requested_size + 3 * ALLOC_HEADER_SIZE > ARENA_SIZE ?
+      requested_size + 3 * ALLOC_HEADER_SIZE : needed_size;  
+    
     header* new_chunk = get_more_mem(needed_size);
     insert_free_block(new_chunk);
     found_header = find_header(requested_size);
