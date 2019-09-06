@@ -230,9 +230,7 @@ header* split_header(header* head, size_t needed_size) {
   head->prev = NULL;
   head->size = needed_size;
 
-  printf("Split Header/Block:\n");
   print_object(head);
-  printf("New Header/Block:\n");
   print_object(new_header);
 
 
@@ -341,7 +339,6 @@ void *my_malloc(size_t size) {
  
   header* found_header = find_header(size);
   if (!found_header) {
-    printf("No Header found. Getting More mem.\n");
     header* new_chunk = get_more_mem(size);
     insert_free_block(new_chunk);
     found_header = find_header(size);
@@ -349,13 +346,7 @@ void *my_malloc(size_t size) {
 
   assert(found_header);
 
-  printf("Found Header:\n");
-  print_object(found_header);
-  printf("Split found header with size: %ld\n", size);
   split_header(found_header, size);
-  printf("Split success.\nFree List:\n");
-  freelist_print(*print_object);
-  printf("\n\n");
 
   /* Change the state of the found header to ALOOCATED */
 
