@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <unistd.h>
 
 /* Pointer to the location of the heap prior to any sbrk calls */
@@ -283,12 +284,12 @@ header* get_more_mem(size_t needed_mem_size) {
     size += ARENA_SIZE;
   }
   
-  void* old_base = g_base;  
   g_base = sbrk(size);
   
   /* Ensures that more mem was created */
 
-  if ((old_base == g_base) || (g_base == ((void *) -1))) {
+  if (g_base == ((void *) -1)) {
+    errno = ENOMEM;
     return NULL;
   }
 
