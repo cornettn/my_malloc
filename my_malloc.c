@@ -321,7 +321,7 @@ void *my_malloc(size_t requested_size) {
   /* Ensure that there is enough space for next/prev pointers when this
    * header is freed */
 
-  needed_size = needed_size + ALLOC_HEADER_SIZE < sizeof(header) ?
+  needed_size = requested_size + ALLOC_HEADER_SIZE < sizeof(header) ?
     sizeof(header) - ALLOC_HEADER_SIZE: needed_size;
 
   if ( g_freelist_head == NULL) {
