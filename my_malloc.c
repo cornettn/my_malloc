@@ -283,7 +283,14 @@ header* get_more_mem(size_t needed_mem_size) {
     size += ARENA_SIZE;
   }
   
+  void* old_base = g_base;  
   g_base = sbrk(size);
+  
+  /* Ensures that more mem was created */
+
+  if ((old_base == g_base) || (g_base == ((void *) -1))) {
+    return NULL;
+  }
 
   /* Set the fenceposts in the new chunk of mem */
   set_fenceposts(g_base, size);
@@ -330,6 +337,10 @@ void *my_malloc(size_t requested_size) {
 
     header* newly_allocated_head = get_more_mem(needed_size);
 
+    if (newly_allocated_head == NULL) {
+      return NULL;
+    }
+
     /* Create the head of the free list in the chunk of space received from 
      * the OS. 
      *
@@ -350,6 +361,10 @@ void *my_malloc(size_t requested_size) {
     
     header* new_chunk = get_more_mem(needed_size);
     insert_free_block(new_chunk);
+    if (new_chunk == NULL) {
+      return NULL;
+    }
+
     found_header = find_header(requested_size);
   }
 
