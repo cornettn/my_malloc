@@ -277,14 +277,12 @@ header* get_more_mem(size_t needed_mem_size) {
 
   /* Request more memory from the OS */ 
   
-  printf("get_more_mem(): Requested size: %ld\n", needed_mem_size);
   size_t size = ARENA_SIZE;
   
   while (size < needed_mem_size) {
     size += ARENA_SIZE;
   }
   
-  printf("get_more_mem(): Requesting mem from OS of size: %ld\n", size);
   g_base = sbrk(size);
 
   /* Set the fenceposts in the new chunk of mem */
@@ -327,7 +325,6 @@ void *my_malloc(size_t requested_size) {
     sizeof(header) - ALLOC_HEADER_SIZE: needed_size;
 
   if ( g_freelist_head == NULL) {
-    needed_size = requested_size + 3 * ALLOC_HEADER_SIZE;
     header* newly_allocated_head = get_more_mem(needed_size);
 
     /* Create the head of the free list in the chunk of space received from 
