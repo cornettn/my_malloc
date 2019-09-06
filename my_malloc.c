@@ -329,7 +329,7 @@ void *my_malloc(size_t requested_size) {
     /* Ensure that block of memory that is requested can sustain the 
      * free list data structure */
 
-    needed_size = requested_size + ALLOC_HEADER_SIZE * 3 > needed_size ?
+    needed_size = requested_size + ALLOC_HEADER_SIZE * 3 > ARENA_SIZE ?
       requested_size + ALLOC_HEADER_SIZE * 3 : needed_size;
 
     header* newly_allocated_head = get_more_mem(needed_size);
