@@ -325,6 +325,13 @@ void *my_malloc(size_t requested_size) {
     sizeof(header) - ALLOC_HEADER_SIZE: needed_size;
 
   if ( g_freelist_head == NULL) {
+    
+    /* Ensure that block of memory that is requested can sustain the 
+     * free list data structure */
+
+    needed_size = requested_size + ALLOC_HEADER_SIZE * 3 > needed_size ?
+      requested_size + ALLOC_HEADER_SIZE * 3 : needed_size;
+
     header* newly_allocated_head = get_more_mem(needed_size);
 
     /* Create the head of the free list in the chunk of space received from 
