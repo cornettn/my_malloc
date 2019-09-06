@@ -200,13 +200,34 @@ static void init() {
  * and split it to fit exactly that amount.
  * 
  * head: The header that is to be split into a smaller size.
- * size: The size that the header is going to be split to. 
+ * needed_size: The size that the header is going to be split to. 
  *
- * return: A pointer to the split header.
+ * return: A pointer to the split header with the correct size;
  */
 
-header* split_header(header* head, size_t size) {
-return NULL;
+header* split_header(header* head, size_t needed_size) {
+  header* new_header = head + ALLOC_HEADER_SIZE + needed_size;
+  new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
+  new_header->prev = head->prev;
+  if (new_header->prev != NULL) {
+    new_header->prev->next = new_header;
+  }
+
+  new_header->next = head->next;
+  if (new_header->next != NULL) {
+    new_header->next->prev = new_header;
+    new_header->next->left_size = TRUE_SIZE(new_header);
+  }
+  new_header->left_size = head->left_size;
+
+  if (head == g_freelist_head) {
+    g_freelist_head = new_header;
+  }
+
+  head->next = NULL;
+  head->prev = NULL;
+
+  return head;
 } /* split_header()  */
 
 /*
@@ -266,7 +287,7 @@ header* get_more_mem(size_t needed_mem_size) {
   
   printf("\tInitializing header\n"); 
   header* head = g_base;
-  head->size = size - ((size_t) ALLOC_HEADER_SIZE);
+  head->size = size - 3 * ((size_t) ALLOC_HEADER_SIZE);
   head->left_size = 0;
   head->next = NULL;
   head->prev = NULL;
@@ -318,21 +339,18 @@ void *my_malloc(size_t size) {
   printf("Looking for a header that has at least size %ld bytes\n", size); 
   header* found_header = find_header(size);
   if (found_header) {
+    print_status(found_header);
     print_object(found_header);
   }
   else {
     get_more_mem(size);
   }
 
-  // split_header()
-  
-  printf("Before\n");
-  print_status(found_header);
-  print_object(found_header);
+  split_header(found_header, size);
+
+  /* Change the state of the found header to ALOOCATED */
+
   found_header->size = found_header->size | (state) ALLOCATED;
-  print_status(found_header);
-  print_object(found_header);
-  printf("After\n");
 
   pthread_mutex_unlock(&g_mutex);
   return &found_header->data;
