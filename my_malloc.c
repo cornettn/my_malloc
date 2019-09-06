@@ -56,14 +56,11 @@ static header *find_header(size_t size) __attribute__((unused));
 static header *first_fit(size_t size) {
   header* current_block = g_freelist_head;
   while (current_block != NULL) {
-    printf("\tBlock's size: %ld\n\tsize: %ld\n", current_block->size, size);
     if (current_block->size >= size) {
-      printf("Header Found.\n");
       return current_block;
     }
     current_block = current_block->next;
   }
-  printf("No header found!\n");
   return NULL;
 } /* first_fit() */
 
@@ -276,16 +273,13 @@ header* get_more_mem(size_t needed_mem_size) {
     size += ARENA_SIZE;
   }
   
-  printf("my_malloc: Getting more space: %ld more bytes.\n", size);
   g_base = sbrk(size);
 
   /* Set the fenceposts in the new chunk of mem */
-  printf("\tSetting Fenceposts\n"); 
   set_fenceposts(g_base, size);
   
   /* Initialize the header in the new chunk */
   
-  printf("\tInitializing header\n"); 
   header* head = g_base;
   head->size = size - 3 * ((size_t) ALLOC_HEADER_SIZE);
   head->left_size = 0;
@@ -301,7 +295,6 @@ header* get_more_mem(size_t needed_mem_size) {
 
 void *my_malloc(size_t size) {
   pthread_mutex_lock(&g_mutex);
-  printf("my_malloc\n");
 
   if (size == 0) {
     return NULL;
@@ -319,7 +312,6 @@ void *my_malloc(size_t size) {
 
   if ( g_freelist_head == NULL) {  
     header* newly_allocated_head = get_more_mem(size);
-    printf("Done Getting Space\n");
 
     /* Create the head of the free list in the chunk of space received from 
      * the OS. 
@@ -329,20 +321,13 @@ void *my_malloc(size_t size) {
      */
 
     g_freelist_head = newly_allocated_head;
-    printf("Print Free List\n\n"); 
-    freelist_print(*print_object);
   }
   
 
   /* Look for a header with the proper contraints */
  
-  printf("Looking for a header that has at least size %ld bytes\n", size); 
   header* found_header = find_header(size);
-  if (found_header) {
-    print_status(found_header);
-    print_object(found_header);
-  }
-  else {
+  if (!found_header) {
     get_more_mem(size);
   }
 
