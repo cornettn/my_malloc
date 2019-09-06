@@ -170,6 +170,7 @@ static void set_fenceposts(void *mem, size_t size) {
   right_fence->size = (state) FENCEPOST;
 
   right_fence->left_size = size - 3 * ALLOC_HEADER_SIZE;
+  printf("left_fence: %p\nright_fence: %p\n", left_fence, right_fence);
 } /* set_fenceposts() */
 
 /*
@@ -294,6 +295,7 @@ header* get_more_mem(size_t needed_mem_size) {
   }
 
   /* Set the fenceposts in the new chunk of mem */
+  
   set_fenceposts(g_base, size);
   
   /* Initialize the header in the new chunk */
