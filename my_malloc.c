@@ -276,13 +276,15 @@ header* get_more_mem(size_t needed_mem_size) {
    */
 
   /* Request more memory from the OS */ 
-
+  
+  printf("get_more_mem(): Requested size: %ld\n", needed_mem_size);
   size_t size = ARENA_SIZE;
   
   while (size < needed_mem_size) {
     size += ARENA_SIZE;
   }
   
+  printf("get_more_mem(): Requesting mem from OS of size: %ld\n", size);
   g_base = sbrk(size);
 
   /* Set the fenceposts in the new chunk of mem */
@@ -303,26 +305,30 @@ header* get_more_mem(size_t needed_mem_size) {
  * TODO: implement malloc
  */
 
-void *my_malloc(size_t size) {
+void *my_malloc(size_t requested_size) {
   pthread_mutex_lock(&g_mutex);
+  
+  size_t needed_size = requested_size + ALLOC_HEADER_SIZE;
 
-  if (size == 0) {
+  if (requested_size == 0) {
     pthread_mutex_unlock(&g_mutex);
     return NULL;
   }
 
   /* Ensure that the size allocated is a multiple of MIN_ALLOCATION */
   
-  size = roundup(size, MIN_ALLOCATION);
+  needed_size = roundup(needed_size, MIN_ALLOCATION);
+
 
   /* Ensure that there is enough space for next/prev pointers when this
    * header is freed */
 
-  size = size + ALLOC_HEADER_SIZE < sizeof(header) ?
-    sizeof(header) - ALLOC_HEADER_SIZE: size;
+  needed_size = needed_size + ALLOC_HEADER_SIZE < sizeof(header) ?
+    sizeof(header) - ALLOC_HEADER_SIZE: needed_size;
 
-  if ( g_freelist_head == NULL) {  
-    header* newly_allocated_head = get_more_mem(size);
+  if ( g_freelist_head == NULL) {
+    needed_size = requested_size + 3 * ALLOC_HEADER_SIZE;
+    header* newly_allocated_head = get_more_mem(needed_size);
 
     /* Create the head of the free list in the chunk of space received from 
      * the OS. 
@@ -337,16 +343,16 @@ void *my_malloc(size_t size) {
 
   /* Look for a header with the proper contraints */
  
-  header* found_header = find_header(size);
+  header* found_header = find_header(requested_size);
   if (!found_header) {
-    header* new_chunk = get_more_mem(size);
+    header* new_chunk = get_more_mem(needed_size);
     insert_free_block(new_chunk);
-    found_header = find_header(size);
+    found_header = find_header(requested_size);
   }
 
   assert(found_header);
 
-  split_header(found_header, size);
+  split_header(found_header, requested_size);
 
   /* Change the state of the found header to ALOOCATED */
 
