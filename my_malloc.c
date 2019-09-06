@@ -56,7 +56,7 @@ static header *find_header(size_t size) __attribute__((unused));
 static header *first_fit(size_t size) {
   header* current_block = g_freelist_head;
   while (current_block != NULL) {
-    if (current_block->size >= size) {
+    if (TRUE_SIZE(current_block) >= size) {
       return current_block;
     }
     current_block = current_block->next;
@@ -203,8 +203,12 @@ static void init() {
  */
 
 header* split_header(header* head, size_t needed_size) {
-  header* new_header = head + ALLOC_HEADER_SIZE + needed_size;
+  header* new_header = head;
+  char* new_head = (char *) new_header;
+  new_head += ALLOC_HEADER_SIZE + needed_size;
+  new_header = (header *) new_head;
   new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
+ 
   new_header->prev = head->prev;
   if (new_header->prev != NULL) {
     new_header->prev->next = new_header;
@@ -214,6 +218,7 @@ header* split_header(header* head, size_t needed_size) {
   if (new_header->next != NULL) {
     new_header->next->prev = new_header;
     new_header->next->left_size = TRUE_SIZE(new_header);
+ 
   }
   new_header->left_size = head->left_size;
 
@@ -223,6 +228,13 @@ header* split_header(header* head, size_t needed_size) {
 
   head->next = NULL;
   head->prev = NULL;
+  head->size = needed_size;
+
+  printf("Split Header/Block:\n");
+  print_object(head);
+  printf("New Header/Block:\n");
+  print_object(new_header);
+
 
   return head;
 } /* split_header()  */
@@ -280,7 +292,7 @@ header* get_more_mem(size_t needed_mem_size) {
   
   /* Initialize the header in the new chunk */
   
-  header* head = g_base;
+  header* head = g_base + ALLOC_HEADER_SIZE;
   head->size = size - 3 * ((size_t) ALLOC_HEADER_SIZE);
   head->left_size = 0;
   head->next = NULL;
@@ -329,10 +341,21 @@ void *my_malloc(size_t size) {
  
   header* found_header = find_header(size);
   if (!found_header) {
-    get_more_mem(size);
+    printf("No Header found. Getting More mem.\n");
+    header* new_chunk = get_more_mem(size);
+    insert_free_block(new_chunk);
+    found_header = find_header(size);
   }
 
+  assert(found_header);
+
+  printf("Found Header:\n");
+  print_object(found_header);
+  printf("Split found header with size: %ld\n", size);
   split_header(found_header, size);
+  printf("Split success.\nFree List:\n");
+  freelist_print(*print_object);
+  printf("\n\n");
 
   /* Change the state of the found header to ALOOCATED */
 
