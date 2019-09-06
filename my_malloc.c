@@ -297,6 +297,7 @@ void *my_malloc(size_t size) {
   pthread_mutex_lock(&g_mutex);
 
   if (size == 0) {
+    pthread_mutex_unlock(&g_mutex);
     return NULL;
   }
 
