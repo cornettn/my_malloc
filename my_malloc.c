@@ -234,8 +234,7 @@ size_t is_fencepost(header * head) {
 
 header* split_header(header* head, size_t needed_size) {
   
-  /*
-  printf("Split Header to have size %ld\n", needed_size);
+//  printf("Split Header to have size %ld\n", needed_size);
   printf("\nBEFORE\n");
   printf("Left Neighbor:\n");
   print_object(left_neighbor(head));
@@ -243,7 +242,7 @@ header* split_header(header* head, size_t needed_size) {
   print_object(head);
   printf("Right Neighbor:\n");
   print_object(right_neighbor(head));
-  */
+  
   
 
   header* new_header = (header *) (((char *) head) + ALLOC_HEADER_SIZE + needed_size);
@@ -253,7 +252,7 @@ header* split_header(header* head, size_t needed_size) {
   new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
 
   new_header->prev = NULL;
-  if (head->prev != new_header) { 
+  if ((head->prev != new_header) && (head->prev != NULL)) { 
     new_header->prev = head->prev;
   }
   if ((new_header->prev != NULL)) { // && (!is_fencepost(left_neighbor(head)))) {
@@ -261,7 +260,7 @@ header* split_header(header* head, size_t needed_size) {
   }
 
   new_header->next = NULL;
-  if (head->next != new_header) {
+  if ((head->next != new_header) && (head->next != NULL)) {
     new_header->next = head->next;
   }
   if ((new_header->next != NULL)) { // && (!is_fencepost(right_neighbor(head)))) {
@@ -282,7 +281,7 @@ header* split_header(header* head, size_t needed_size) {
   head->prev = NULL;
   head->size = needed_size;
 
- /*
+ 
   printf("\nAFTER\n");
   printf("Left Neighbor:\n");
   print_object(left_neighbor(head));
@@ -290,7 +289,7 @@ header* split_header(header* head, size_t needed_size) {
   print_object(head);
   printf("Right Neighbor:\n");
   print_object(right_neighbor(head));
-  */
+  
 
   return head;
 } /* split_header()  */
