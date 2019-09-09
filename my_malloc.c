@@ -170,7 +170,11 @@ static void set_fenceposts(void *mem, size_t size) {
   right_fence->size = (state) FENCEPOST;
 
   right_fence->left_size = size - 3 * ALLOC_HEADER_SIZE;
-  printf("left_fence: %p\nright_fence: %p\n", left_fence, right_fence);
+/* 
+  printf("Fenceposts:\n"); 
+  print_object(left_fence);
+  print_object(right_fence);
+*/
 } /* set_fenceposts() */
 
 /*
@@ -193,6 +197,26 @@ static void init() {
   g_base = sbrk(0);
 } /* init() */
 
+/*
+ * This function is used to determine if header is a fencepost or not.
+ *
+ * head: The header that is being tested
+ *
+ * return: true or false depending on the test
+ */
+
+size_t is_fencepost(header * head) {
+  if (head != NULL) {
+    size_t value = head->size;
+    value++;
+    value--;
+    if ((head->size & ((state) FENCEPOST)) == (state) FENCEPOST) {
+      return 1;
+    }
+    return 0;
+  }
+  return 0;
+}
 
 /*
  * This function will take a header with an appropirate amount of space
@@ -205,36 +229,58 @@ static void init() {
  */
 
 header* split_header(header* head, size_t needed_size) {
-  header* new_header = head;
-  char* new_head = (char *) new_header;
-  new_head += ALLOC_HEADER_SIZE + needed_size;
-  new_header = (header *) new_head;
+  
+  /*
+  printf("Split Header to have size %ld\n", needed_size);
+  printf("\nBEFORE\n");
+  printf("Left Neighbor:\n");
+  print_object(left_neighbor(head));
+  printf("Current:\n");
+  print_object(head);
+  printf("Right Neighbor:\n");
+  print_object(right_neighbor(head));
+  */
+  
+
+  header* new_header = (header *) (((char *) head) + ALLOC_HEADER_SIZE + needed_size);
+  //char* new_head = (char *) new_header;
+  //new_head += ALLOC_HEADER_SIZE + needed_size;
+  //new_header = (header *) new_head;
   new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
  
   new_header->prev = head->prev;
-  if (new_header->prev != NULL) {
+  if ((new_header->prev != NULL)) { // && (!is_fencepost(left_neighbor(head)))) {
     new_header->prev->next = new_header;
   }
 
   new_header->next = head->next;
-  if (new_header->next != NULL) {
+  if ((new_header->next != NULL)) { // && (!is_fencepost(right_neighbor(head)))) {
     new_header->next->prev = new_header;
     new_header->next->left_size = TRUE_SIZE(new_header);
  
   }
-  new_header->left_size = head->left_size;
+  new_header->left_size = needed_size;
 
   if (head == g_freelist_head) {
     g_freelist_head = new_header;
   }
+  printf("new header\n");
+  print_object(new_header);
+  right_neighbor(new_header)->left_size = new_header->size;
 
   head->next = NULL;
   head->prev = NULL;
   head->size = needed_size;
 
+ /*
+  printf("\nAFTER\n");
+  printf("Left Neighbor:\n");
+  print_object(left_neighbor(head));
+  printf("Current:\n");
   print_object(head);
-  print_object(new_header);
-
+  printf("Right Neighbor:\n");
+  print_object(right_neighbor(head));
+  */
 
   return head;
 } /* split_header()  */
@@ -285,22 +331,46 @@ header* get_more_mem(size_t needed_mem_size) {
     size += ARENA_SIZE;
   }
   
-  g_base = sbrk(size);
+  //printf("needed_mem_size: %ld\nsize: %ld\n", needed_mem_size, size);
+  void* location = sbrk(size);
   
   /* Ensures that more mem was created */
 
-  if (g_base == ((void *) -1)) {
+  if (location == ((void *) -1)) {
     errno = ENOMEM;
     return NULL;
   }
 
   /* Set the fenceposts in the new chunk of mem */
   
-  set_fenceposts(g_base, size);
+  set_fenceposts(location, size);
+
+  /* Coalesce if needed */
   
+  printf("g_base: \t%p\nlocation: \t%p\n", g_base, location); 
+  if (g_base != location) {
+
+    /* If statement ensures that there has been more than one call to
+     * sbrk() so there should be multiple set of fenceposts. */
+
+    header* possible_fencepost = location - ALLOC_HEADER_SIZE;
+    if (possible_fencepost == g_last_fence_post) {
+      header* left_header = left_neighbor(g_last_fence_post);
+      printf("\n\n***\nLeft header\n");
+      left_header->size = left_header->size + ALLOC_HEADER_SIZE + size;
+      print_object(left_header);
+      g_last_fence_post = location + size - ALLOC_HEADER_SIZE;
+      return left_header;
+    }
+  }
+ 
+  /* Set the g_last_fencepost variable the most recent right fencepost */
+
+  g_last_fence_post = location + size - ALLOC_HEADER_SIZE;
+
   /* Initialize the header in the new chunk */
   
-  header* head = g_base + ALLOC_HEADER_SIZE;
+  header* head = location + ALLOC_HEADER_SIZE;
   head->size = size - 3 * ((size_t) ALLOC_HEADER_SIZE);
   head->left_size = 0;
   head->next = NULL;
@@ -315,24 +385,30 @@ header* get_more_mem(size_t needed_mem_size) {
 
 void *my_malloc(size_t requested_size) {
   pthread_mutex_lock(&g_mutex);
-  
-  size_t needed_size = requested_size + ALLOC_HEADER_SIZE;
+
+  /* Make sure that NULL is returned when allocating no mem. */
 
   if (requested_size == 0) {
     pthread_mutex_unlock(&g_mutex);
     return NULL;
   }
+ 
+  /* Ensure that the requested size is a multiple of MIN_ALLOCATION */
+
+  requested_size = roundup(requested_size, MIN_ALLOCATION);
+  size_t needed_size = requested_size + ALLOC_HEADER_SIZE;
 
   /* Ensure that the size allocated is a multiple of MIN_ALLOCATION */
   
   needed_size = roundup(needed_size, MIN_ALLOCATION);
-
 
   /* Ensure that there is enough space for next/prev pointers when this
    * header is freed */
 
   needed_size = requested_size + ALLOC_HEADER_SIZE < sizeof(header) ?
     sizeof(header) - ALLOC_HEADER_SIZE: needed_size;
+  requested_size = requested_size + ALLOC_HEADER_SIZE < sizeof(header) ?
+    sizeof(header) - ALLOC_HEADER_SIZE: requested_size;
 
   if ( g_freelist_head == NULL) {
     needed_size = requested_size + 3 * ALLOC_HEADER_SIZE > ARENA_SIZE ?
@@ -352,12 +428,14 @@ void *my_malloc(size_t requested_size) {
      */
 
     g_freelist_head = newly_allocated_head;
+    //printf("freelist head: \n");
+    //print_object(g_freelist_head);
   }
   
 
   /* Look for a header with the proper contraints */
  
-  header* found_header = find_header(requested_size);
+  header* found_header = find_header(needed_size);
   if (!found_header) {
     needed_size = requested_size + 3 * ALLOC_HEADER_SIZE > ARENA_SIZE ?
       requested_size + 3 * ALLOC_HEADER_SIZE : needed_size;  
@@ -368,11 +446,15 @@ void *my_malloc(size_t requested_size) {
       return NULL;
     }
 
-    found_header = find_header(requested_size);
+    found_header = find_header(needed_size);
   }
 
   assert(found_header);
+ 
+  printf("Found header:\n");
+  print_object(found_header);
 
+  //printf("needed_size: %ld\nrequested_size: %ld\n", needed_size, requested_size);
   split_header(found_header, requested_size);
 
   /* Change the state of the found header to ALOOCATED */
@@ -380,6 +462,9 @@ void *my_malloc(size_t requested_size) {
   found_header->size = found_header->size | (state) ALLOCATED;
 
   pthread_mutex_unlock(&g_mutex);
+ 
+  //printf("\n\nFREE LIST:\n"); 
+  //freelist_print(*print_object);
   return &found_header->data;
 } /* my_malloc() */
 
