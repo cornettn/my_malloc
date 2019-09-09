@@ -130,6 +130,8 @@ static header *find_header(size_t size) {
  */
 
 static inline header *left_neighbor(header *h) {
+//  printf("Finding left neighbor for: \n");
+//  print_object(h);
   return (header *) (((char *) h) - h->left_size - ALLOC_HEADER_SIZE);
 } /* left_neighbor() */
 
@@ -138,6 +140,8 @@ static inline header *left_neighbor(header *h) {
  */
 
 static inline header *right_neighbor(header *h) {
+//  printf("Finding right neighbor for: \n");
+//  print_object(h);
   return (header *) (((char *) h) + ALLOC_HEADER_SIZE + TRUE_SIZE(h));
 } /* right_neighbor() */
 
@@ -247,13 +251,19 @@ header* split_header(header* head, size_t needed_size) {
   //new_head += ALLOC_HEADER_SIZE + needed_size;
   //new_header = (header *) new_head;
   new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
- 
-  new_header->prev = head->prev;
+
+  new_header->prev = NULL;
+  if (head->prev != new_header) { 
+    new_header->prev = head->prev;
+  }
   if ((new_header->prev != NULL)) { // && (!is_fencepost(left_neighbor(head)))) {
     new_header->prev->next = new_header;
   }
 
-  new_header->next = head->next;
+  new_header->next = NULL;
+  if (head->next != new_header) {
+    new_header->next = head->next;
+  }
   if ((new_header->next != NULL)) { // && (!is_fencepost(right_neighbor(head)))) {
     new_header->next->prev = new_header;
     new_header->next->left_size = TRUE_SIZE(new_header);
@@ -264,8 +274,8 @@ header* split_header(header* head, size_t needed_size) {
   if (head == g_freelist_head) {
     g_freelist_head = new_header;
   }
-  printf("new header\n");
-  print_object(new_header);
+ // printf("new header\n");
+ // print_object(new_header);
   right_neighbor(new_header)->left_size = new_header->size;
 
   head->next = NULL;
@@ -317,11 +327,6 @@ size_t roundup(size_t num_to_round, size_t multiple) {
  */
 
 header* get_more_mem(size_t needed_mem_size) {
-  
-  /*
-   * TODO: Add a check to see if chunks can be coallesed. If they can,
-   * make sure that the fenceposts are updated accordingly.
-   */
 
   /* Request more memory from the OS */ 
   
@@ -344,10 +349,10 @@ header* get_more_mem(size_t needed_mem_size) {
   /* Set the fenceposts in the new chunk of mem */
   
   set_fenceposts(location, size);
-
+  
   /* Coalesce if needed */
   
-  printf("g_base: \t%p\nlocation: \t%p\n", g_base, location); 
+  //printf("g_base: \t%p\nlocation: \t%p\n", g_base, location); 
   if (g_base != location) {
 
     /* If statement ensures that there has been more than one call to
@@ -356,9 +361,9 @@ header* get_more_mem(size_t needed_mem_size) {
     header* possible_fencepost = location - ALLOC_HEADER_SIZE;
     if (possible_fencepost == g_last_fence_post) {
       header* left_header = left_neighbor(g_last_fence_post);
-      printf("\n\n***\nLeft header\n");
-      left_header->size = left_header->size + ALLOC_HEADER_SIZE + size;
-      print_object(left_header);
+ //     printf("\n\n***\nLeft header\n");
+      left_header->size = left_header->size + size;
+ //     print_object(left_header);
       g_last_fence_post = location + size - ALLOC_HEADER_SIZE;
       return left_header;
     }
@@ -451,8 +456,8 @@ void *my_malloc(size_t requested_size) {
 
   assert(found_header);
  
-  printf("Found header:\n");
-  print_object(found_header);
+  //printf("Found header:\n");
+  //print_object(found_header);
 
   //printf("needed_size: %ld\nrequested_size: %ld\n", needed_size, requested_size);
   split_header(found_header, requested_size);
@@ -463,8 +468,9 @@ void *my_malloc(size_t requested_size) {
 
   pthread_mutex_unlock(&g_mutex);
  
-  //printf("\n\nFREE LIST:\n"); 
-  //freelist_print(*print_object);
+  printf("\n\nFREE LIST:\n"); 
+  freelist_print(*print_object);
+  printf("END\n\n");
   return &found_header->data;
 } /* my_malloc() */
 
