@@ -205,26 +205,28 @@ static void init() {
 header* split_header(header* head, size_t needed_size) {
   header* new_header = (header *) (((char *) head) + ALLOC_HEADER_SIZE + needed_size);
   new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
-
-  new_header->prev = NULL;
-  if ((head->prev != new_header) && (head->prev != NULL)) { 
-    new_header->prev = head->prev;
+  
+  if (head->prev == NULL) {
+    new_header->prev = NULL;
   }
-  if ((new_header->prev != NULL)) { 
+  else if ((head->prev != new_header) && (head->prev != NULL)) { 
+    new_header->prev = head->prev;
     new_header->prev->next = new_header;
   }
 
-  new_header->next = NULL;
-  if ((head->next != new_header) && (head->next != NULL)) {
-    new_header->next = head->next;
+  if (head->next == NULL) {
+    new_header->next = NULL;
   }
-  if ((new_header->next != NULL)) { 
+  else if ((head->next != new_header) && (head->next != NULL)) {
+    new_header->next = head->next;
     new_header->next->prev = new_header;
   }
+
   new_header->left_size = needed_size;
 
   if (head == g_freelist_head) {
     g_freelist_head = new_header;
+    g_freelist_head->prev = NULL;
   }
   right_neighbor(new_header)->left_size = new_header->size;
 
@@ -384,12 +386,7 @@ void *my_malloc(size_t requested_size) {
 
   assert(found_header);
 
-  header * prev = found_header->prev;
-  header * new_head = split_header(found_header, requested_size);
-  if (prev) {
-    new_head->prev = prev;
-    prev->next = new_head;
-  }
+  split_header(found_header, requested_size);
 
 
   /* Change the state of the found header to ALOOCATED */
