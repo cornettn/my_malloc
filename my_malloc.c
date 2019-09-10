@@ -201,6 +201,10 @@ static void init() {
   g_base = sbrk(0);
 } /* init() */
 
+// header* left_coalesce()
+// header* right_coalesce()
+
+
 /*
  * This function will take a header with an appropirate amount of space
  * and split it to fit exactly that amount.
@@ -403,7 +407,33 @@ void *my_malloc(size_t requested_size) {
 
 void my_free(void *p) {
   pthread_mutex_lock(&g_mutex);
-  // Insert code here
+  
+  if (p == NULL) {
+    pthread_mutex_unlock(&g_mutex);
+    return;
+  }
+
+//  header *head = (header *) (((char *) p) - ALLOC_HEADER_SIZE);
+  
+  /* Ensures that the block is not unallocated */
+/*
+  if (isUnallocated(head)) {
+    assert(false);
+  }
+*/
+
+//  header *left_neighbor = left_neighbor(head);
+//  header *right_neighbor = right_neighbor(head);
+/*  
+  if (isUnallocated(left_neighbor)) {
+
+  }
+
+
+  if (isUnallocated(left_neighbor)) {
+
+  }
+*/
   pthread_mutex_unlock(&g_mutex);
 
   // Remove this code
@@ -411,6 +441,12 @@ void my_free(void *p) {
   assert(false);
   exit(1);
 } /* my_free() */
+
+/*
+size_t isUnallocated(header * head) {
+  return (TRUE_SIZE(head) == head->size);
+}
+*/
 
 /*
  * Calls malloc and sets each byte of
