@@ -95,9 +95,18 @@ static header *best_fit(size_t size) {
  */
 
 static header *worst_fit(size_t size) {
-  (void) size;
-  assert(false);
-  exit(1);
+  header *worst_fit = g_freelist_head;
+  header *current_block = g_freelist_head;
+  while (current_block != NULL) {
+    size_t curr_size = TRUE_SIZE(current_block);
+    if ( curr_size >= size ) {
+      if (curr_size >= worst_fit->size) {
+        worst_fit = current_block;
+      }
+    }
+    current_block = current_block->next;
+  }
+  return worst_fit;
 } /* worst_fit() */
 
 /*
@@ -325,9 +334,6 @@ header* get_more_mem(size_t needed_mem_size) {
   return head;
 } /* get_more_mem() */
 
-/*
- * TODO: implement malloc
- */
 
 void *my_malloc(size_t requested_size) {
   pthread_mutex_lock(&g_mutex);
@@ -368,7 +374,6 @@ void *my_malloc(size_t requested_size) {
     g_freelist_head = newly_allocated_head;
   }
   
-
   /* Look for a header with the proper contraints */
  
   header* found_header = find_header(requested_size);
