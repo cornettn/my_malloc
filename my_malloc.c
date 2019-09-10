@@ -220,8 +220,6 @@ header* split_header(header* head, size_t needed_size) {
   }
   if ((new_header->next != NULL)) { 
     new_header->next->prev = new_header;
-    new_header->next->left_size = TRUE_SIZE(new_header);
- 
   }
   new_header->left_size = needed_size;
 
@@ -229,6 +227,7 @@ header* split_header(header* head, size_t needed_size) {
     g_freelist_head = new_header;
   }
   right_neighbor(new_header)->left_size = new_header->size;
+
 
   head->next = 0;
   head->prev = 0;
