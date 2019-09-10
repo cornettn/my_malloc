@@ -342,28 +342,23 @@ void *my_malloc(size_t requested_size) {
   /* Ensure that the requested size is a multiple of MIN_ALLOCATION */
 
   requested_size = roundup(requested_size, MIN_ALLOCATION);
-  size_t needed_size = requested_size + ALLOC_HEADER_SIZE;
-
-  /* Ensure that the size allocated is a multiple of MIN_ALLOCATION */
-  
-  needed_size = roundup(needed_size, MIN_ALLOCATION);
 
   /* Ensure that there is enough space for next/prev pointers when this
    * header is freed */
 
-  needed_size = requested_size + ALLOC_HEADER_SIZE < sizeof(header) ?
-    sizeof(header) - ALLOC_HEADER_SIZE: needed_size;
   requested_size = requested_size + ALLOC_HEADER_SIZE < sizeof(header) ?
     sizeof(header) - ALLOC_HEADER_SIZE: requested_size;
 
-  if ( g_freelist_head == NULL) {
-
+  size_t needed_size = requested_size + ALLOC_HEADER_SIZE;
+  needed_size = roundup(needed_size, MIN_ALLOCATION);
+  
   /* Ensures that the amount of memory being allocated has enough room
    * for two fenceposts and a header */
-
-    needed_size = requested_size + 3 * ALLOC_HEADER_SIZE > ARENA_SIZE ?
-      requested_size + 3 * ALLOC_HEADER_SIZE : needed_size;  
-
+  
+  needed_size = requested_size + 3 * ALLOC_HEADER_SIZE > ARENA_SIZE ?
+    requested_size + 3 * ALLOC_HEADER_SIZE : needed_size;  
+  
+  if ( g_freelist_head == NULL) {
     header* newly_allocated_head = get_more_mem(needed_size);
 
     if (newly_allocated_head == NULL) {
@@ -378,9 +373,6 @@ void *my_malloc(size_t requested_size) {
  
   header* found_header = find_header(requested_size);
   if (!found_header) {
-    needed_size = requested_size + 3 * ALLOC_HEADER_SIZE > ARENA_SIZE ?
-      requested_size + 3 * ALLOC_HEADER_SIZE : needed_size;  
-    
     header* new_chunk = get_more_mem(needed_size);
     insert_free_block(new_chunk);
     if (new_chunk == NULL) {
@@ -390,10 +382,7 @@ void *my_malloc(size_t requested_size) {
     found_header = find_header(needed_size);
   }
 
-  assert(found_header);
-
   split_header(found_header, requested_size);
-
 
   /* Change the state of the found header to ALOOCATED */
 
