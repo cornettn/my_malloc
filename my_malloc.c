@@ -229,10 +229,10 @@ header* split_header(header* head, size_t needed_size) {
   right_neighbor(new_header)->left_size = new_header->size;
 
 
-  head->next = 0;
-  head->prev = 0;
+  head->next = NULL;
+  head->prev = NULL;
   head->size = needed_size;
-  return head;
+  return new_header;
 } /* split_header()  */
 
 /*
@@ -362,13 +362,6 @@ void *my_malloc(size_t requested_size) {
       return NULL;
     }
 
-    /* Create the head of the free list in the chunk of space received from 
-     * the OS. 
-     *
-     * The g_freelist_head can assigned to the newly allocaed memory because
-     * this is within the section of the code where there is no free list.
-     */
-
     g_freelist_head = newly_allocated_head;
   }
   
@@ -390,7 +383,14 @@ void *my_malloc(size_t requested_size) {
   }
 
   assert(found_header);
-  split_header(found_header, requested_size);
+
+  header * prev = found_header->prev;
+  header * new_head = split_header(found_header, requested_size);
+  if (prev) {
+    new_head->prev = prev;
+    prev->next = new_head;
+  }
+
 
   /* Change the state of the found header to ALOOCATED */
 
