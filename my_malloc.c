@@ -130,8 +130,6 @@ static header *find_header(size_t size) {
  */
 
 static inline header *left_neighbor(header *h) {
-//  printf("Finding left neighbor for: \n");
-//  print_object(h);
   return (header *) (((char *) h) - h->left_size - ALLOC_HEADER_SIZE);
 } /* left_neighbor() */
 
@@ -140,8 +138,6 @@ static inline header *left_neighbor(header *h) {
  */
 
 static inline header *right_neighbor(header *h) {
-//  printf("Finding right neighbor for: \n");
-//  print_object(h);
   return (header *) (((char *) h) + ALLOC_HEADER_SIZE + TRUE_SIZE(h));
 } /* right_neighbor() */
 
@@ -174,11 +170,6 @@ static void set_fenceposts(void *mem, size_t size) {
   right_fence->size = (state) FENCEPOST;
 
   right_fence->left_size = size - 3 * ALLOC_HEADER_SIZE;
-/* 
-  printf("Fenceposts:\n"); 
-  print_object(left_fence);
-  print_object(right_fence);
-*/
 } /* set_fenceposts() */
 
 /*
@@ -202,27 +193,6 @@ static void init() {
 } /* init() */
 
 /*
- * This function is used to determine if header is a fencepost or not.
- *
- * head: The header that is being tested
- *
- * return: true or false depending on the test
- */
-
-size_t is_fencepost(header * head) {
-  if (head != NULL) {
-    size_t value = head->size;
-    value++;
-    value--;
-    if ((head->size & ((state) FENCEPOST)) == (state) FENCEPOST) {
-      return 1;
-    }
-    return 0;
-  }
-  return 0;
-}
-
-/*
  * This function will take a header with an appropirate amount of space
  * and split it to fit exactly that amount.
  * 
@@ -233,29 +203,14 @@ size_t is_fencepost(header * head) {
  */
 
 header* split_header(header* head, size_t needed_size) {
-  
-//  printf("Split Header to have size %ld\n", needed_size);
-  printf("\nBEFORE\n");
-  printf("Left Neighbor:\n");
-  print_object(left_neighbor(head));
-  printf("Current:\n");
-  print_object(head);
-  printf("Right Neighbor:\n");
-  print_object(right_neighbor(head));
-  
-  
-
   header* new_header = (header *) (((char *) head) + ALLOC_HEADER_SIZE + needed_size);
-  //char* new_head = (char *) new_header;
-  //new_head += ALLOC_HEADER_SIZE + needed_size;
-  //new_header = (header *) new_head;
   new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
 
   new_header->prev = NULL;
   if ((head->prev != new_header) && (head->prev != NULL)) { 
     new_header->prev = head->prev;
   }
-  if ((new_header->prev != NULL)) { // && (!is_fencepost(left_neighbor(head)))) {
+  if ((new_header->prev != NULL)) { 
     new_header->prev->next = new_header;
   }
 
@@ -263,7 +218,7 @@ header* split_header(header* head, size_t needed_size) {
   if ((head->next != new_header) && (head->next != NULL)) {
     new_header->next = head->next;
   }
-  if ((new_header->next != NULL)) { // && (!is_fencepost(right_neighbor(head)))) {
+  if ((new_header->next != NULL)) { 
     new_header->next->prev = new_header;
     new_header->next->left_size = TRUE_SIZE(new_header);
  
@@ -273,24 +228,11 @@ header* split_header(header* head, size_t needed_size) {
   if (head == g_freelist_head) {
     g_freelist_head = new_header;
   }
- // printf("new header\n");
- // print_object(new_header);
   right_neighbor(new_header)->left_size = new_header->size;
 
-  head->next = NULL;
-  head->prev = NULL;
+  head->next = 0;
+  head->prev = 0;
   head->size = needed_size;
-
- 
-  printf("\nAFTER\n");
-  printf("Left Neighbor:\n");
-  print_object(left_neighbor(head));
-  printf("Current:\n");
-  print_object(head);
-  printf("Right Neighbor:\n");
-  print_object(right_neighbor(head));
-  
-
   return head;
 } /* split_header()  */
 
@@ -351,7 +293,6 @@ header* get_more_mem(size_t needed_mem_size) {
   
   /* Coalesce if needed */
   
-  //printf("g_base: \t%p\nlocation: \t%p\n", g_base, location); 
   if (g_base != location) {
 
     /* If statement ensures that there has been more than one call to
@@ -360,9 +301,7 @@ header* get_more_mem(size_t needed_mem_size) {
     header* possible_fencepost = location - ALLOC_HEADER_SIZE;
     if (possible_fencepost == g_last_fence_post) {
       header* left_header = left_neighbor(g_last_fence_post);
- //     printf("\n\n***\nLeft header\n");
       left_header->size = left_header->size + size;
- //     print_object(left_header);
       g_last_fence_post = location + size - ALLOC_HEADER_SIZE;
       return left_header;
     }
@@ -432,8 +371,6 @@ void *my_malloc(size_t requested_size) {
      */
 
     g_freelist_head = newly_allocated_head;
-    //printf("freelist head: \n");
-    //print_object(g_freelist_head);
   }
   
 
@@ -454,11 +391,6 @@ void *my_malloc(size_t requested_size) {
   }
 
   assert(found_header);
- 
-  //printf("Found header:\n");
-  //print_object(found_header);
-
-  //printf("needed_size: %ld\nrequested_size: %ld\n", needed_size, requested_size);
   split_header(found_header, requested_size);
 
   /* Change the state of the found header to ALOOCATED */
@@ -466,10 +398,6 @@ void *my_malloc(size_t requested_size) {
   found_header->size = found_header->size | (state) ALLOCATED;
 
   pthread_mutex_unlock(&g_mutex);
- 
-  printf("\n\nFREE LIST:\n"); 
-  freelist_print(*print_object);
-  printf("END\n\n");
   return &found_header->data;
 } /* my_malloc() */
 
