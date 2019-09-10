@@ -299,6 +299,8 @@ header* get_more_mem(size_t needed_mem_size) {
     /* If statement ensures that there has been more than one call to
      * sbrk() so there should be multiple set of fenceposts. */
 
+    // TODO: Make a function for coalescing
+
     header* possible_fencepost = location - ALLOC_HEADER_SIZE;
     if (possible_fencepost == g_last_fence_post) {
       header* left_header = left_neighbor(g_last_fence_post);
@@ -355,6 +357,10 @@ void *my_malloc(size_t requested_size) {
     sizeof(header) - ALLOC_HEADER_SIZE: requested_size;
 
   if ( g_freelist_head == NULL) {
+
+  /* Ensures that the amount of memory being allocated has enough room
+   * for two fenceposts and a header */
+
     needed_size = requested_size + 3 * ALLOC_HEADER_SIZE > ARENA_SIZE ?
       requested_size + 3 * ALLOC_HEADER_SIZE : needed_size;  
 
@@ -370,7 +376,7 @@ void *my_malloc(size_t requested_size) {
 
   /* Look for a header with the proper contraints */
  
-  header* found_header = find_header(needed_size);
+  header* found_header = find_header(requested_size);
   if (!found_header) {
     needed_size = requested_size + 3 * ALLOC_HEADER_SIZE > ARENA_SIZE ?
       requested_size + 3 * ALLOC_HEADER_SIZE : needed_size;  
