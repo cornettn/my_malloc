@@ -205,6 +205,13 @@ static void init() {
 // header* right_coalesce()
 
 
+static size_t isUnallocated(header * head) {
+  if (TRUE_SIZE(head) == head->size) {
+    return 1;
+  }
+  return 0;
+}
+
 /*
  * This function will take a header with an appropirate amount of space
  * and split it to fit exactly that amount.
@@ -413,27 +420,47 @@ void my_free(void *p) {
     return;
   }
 
-//  header *head = (header *) (((char *) p) - ALLOC_HEADER_SIZE);
+  header *head = (header *) (((char *) p) - ALLOC_HEADER_SIZE);
   
   /* Ensures that the block is not unallocated */
-/*
+
   if (isUnallocated(head)) {
     assert(false);
   }
-*/
 
-//  header *left_neighbor = left_neighbor(head);
+  /* Change the state to Unallocated */
+
+  head->size = TRUE_SIZE(head);
+
+//  header *left_neighbor i= left_neighbor(head);
 //  header *right_neighbor = right_neighbor(head);
-/*  
-  if (isUnallocated(left_neighbor)) {
+  
 
+  if (isUnallocated(left_neighbor(head)) &&
+      isUnallocated(right_neighbor(head))) {
+    left_neighbor(head)->size = TRUE_SIZE(left_neighbor(head)) + TRUE_SIZE(head) +
+      TRUE_SIZE(right_neighbor(head)) + ALLOC_HEADER_SIZE * 2;
+    left_neighbor(head)->next = right_neighbor(head)->next;
+    if (left_neighbor(head)->next != NULL) {
+      left_neighbor(head)->next->left_size = left_neighbor(head)->size;
+      left_neighbor(head)->next->prev = left_neighbor(head);
+    }
+
+    right_neighbor(head)->next = NULL;
+    right_neighbor(head)->prev = NULL;
   }
-
-
-  if (isUnallocated(left_neighbor)) {
-
+  else if (isUnallocated(left_neighbor(head))) {
+    left_neighbor(head)->size = TRUE_SIZE(left_neighbor(head)) + TRUE_SIZE(head) +
+      + ALLOC_HEADER_SIZE;
+     head->next = NULL;
+     head->prev = NULL;
   }
-*/
+  else if (isUnallocated(right_neighbor(head))) {
+    printf("Right neighbor\n");
+  }
+  else {
+    insert_free_block(head);
+  }
   pthread_mutex_unlock(&g_mutex);
 
   // Remove this code
@@ -442,11 +469,6 @@ void my_free(void *p) {
   exit(1);
 } /* my_free() */
 
-/*
-size_t isUnallocated(header * head) {
-  return (TRUE_SIZE(head) == head->size);
-}
-*/
 
 /*
  * Calls malloc and sets each byte of
