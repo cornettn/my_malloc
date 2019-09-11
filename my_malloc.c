@@ -424,6 +424,14 @@ void my_free(void *p) {
   
   /* Ensures that the block is not unallocated */
 
+  printf("Before");
+  printf("Left Neighbor\n");
+  print_object(left_neighbor(head));
+  printf("head\n");
+  print_object(head);
+  printf("Right Neighbor\n");
+  print_object(right_neighbor(head));
+
   if (isUnallocated(head)) {
     assert(false);
   }
@@ -431,8 +439,9 @@ void my_free(void *p) {
   /* Change the state to Unallocated */
 
   head->size = TRUE_SIZE(head);
+  print_object(head);
 
-//  header *left_neighbor i= left_neighbor(head);
+//  header *left_neighbor = left_neighbor(head);
 //  header *right_neighbor = right_neighbor(head);
   
 
@@ -445,15 +454,14 @@ void my_free(void *p) {
       left_neighbor(head)->next->left_size = left_neighbor(head)->size;
       left_neighbor(head)->next->prev = left_neighbor(head);
     }
-
+    
     right_neighbor(head)->next = NULL;
     right_neighbor(head)->prev = NULL;
   }
   else if (isUnallocated(left_neighbor(head))) {
     left_neighbor(head)->size = TRUE_SIZE(left_neighbor(head)) + TRUE_SIZE(head) +
       + ALLOC_HEADER_SIZE;
-     head->next = NULL;
-     head->prev = NULL;
+    right_neighbor(head)->left_size = left_neighbor(head)->size;
   }
   else if (isUnallocated(right_neighbor(head))) {
     printf("Right neighbor\n");
@@ -462,11 +470,9 @@ void my_free(void *p) {
     insert_free_block(head);
   }
   pthread_mutex_unlock(&g_mutex);
-
-  // Remove this code
-  (void) p;
-  assert(false);
-  exit(1);
+  
+  printf("Free list After");
+  freelist_print(print_object);
 } /* my_free() */
 
 
