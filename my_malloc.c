@@ -472,20 +472,18 @@ void my_free(void *p) {
     right_neighbor(head)->left_size = left_neighbor(head)->size;
   }
   else if (isUnallocated(right_neighbor(head))) {
- 
-    /* Ensures that the right neighbor is not a fencepost after coalescing */
+    head->next = right_neighbor(head)->next;
+    head->prev = right_neighbor(head)->prev;
 
-    if (isUnallocated(right_neighbor(head))) {
-      head->next = right_neighbor(head)->next;
-      head->prev = right_neighbor(head)->prev;
-
-      if (right_neighbor(head)->next != NULL) {
-        right_neighbor(head)->next->left_size = head->size;
-        right_neighbor(head)->next->prev = head;
-      }
+    if (right_neighbor(head)->next != NULL) {
+      right_neighbor(head)->next->left_size = head->size;
+      right_neighbor(head)->next->prev = head;
     }
 
-    if (head->prev != NULL) {
+    if (right_neighbor(head) == g_freelist_head) {
+      g_freelist_head = head;
+    }
+    else if (head->prev != NULL) {
       head->prev->next = head;
     }
 
