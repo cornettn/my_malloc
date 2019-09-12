@@ -436,8 +436,11 @@ void my_free(void *p) {
   printf("Right Neighbor\n");
   print_object(right_neighbor(head));
 */
+
   if (isUnallocated(head)) {
+    return
     assert(false);
+    exit(1);
   }
 
   /* Change the state to Unallocated */
