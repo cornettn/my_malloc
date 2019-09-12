@@ -232,6 +232,15 @@ static size_t isUnallocated(header * head) {
  */
 
 header* split_header(header* head, size_t needed_size) {
+  //printf("Requested size: %ld\n", needed_size); 
+  printf("Before Splitting\n");
+  printf("Left Neighbor\n");
+  print_object(left_neighbor(head));
+  printf("head\n");
+  print_object(head);
+  printf("Right Neighbor\n");
+  print_object(right_neighbor(head));
+
   header* new_header = (header *) (((char *) head) + ALLOC_HEADER_SIZE + needed_size);
   new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
   
@@ -260,6 +269,14 @@ header* split_header(header* head, size_t needed_size) {
   right_neighbor(new_header)->left_size = new_header->size;
 
 
+  printf("After Splitting\n");
+  printf("Left Neighbor\n");
+  print_object(left_neighbor(head));
+  printf("head\n");
+  print_object(head);
+  printf("Right Neighbor\n");
+  print_object(right_neighbor(head));
+  
   head->next = NULL;
   head->prev = NULL;
   head->size = needed_size;
@@ -404,7 +421,7 @@ void *my_malloc(size_t requested_size) {
       return NULL;
     }
 
-    found_header = find_header(needed_size);
+    found_header = find_header(requested_size);
   }
 /*  
   printf("Before Splitting\n");
@@ -418,8 +435,8 @@ void *my_malloc(size_t requested_size) {
 
   split_header(found_header, requested_size);
 
-  printf("Add This to head:\n");
-  print_object(right_neighbor(found_header));
+//  printf("Add This to head:\n");
+//  print_object(right_neighbor(found_header));
   //insert_free_block(right_neighbor(found_header));
 
   /* Change the state of the found header to ALOOCATED */
