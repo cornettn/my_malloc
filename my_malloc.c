@@ -446,7 +446,6 @@ void my_free(void *p) {
   /* Change the state to Unallocated */
 
   head->size = TRUE_SIZE(head);
-  print_object(head);
 
 //  header *left_neighbor = left_neighbor(head);
 //  header *right_neighbor = right_neighbor(head);
@@ -454,14 +453,16 @@ void my_free(void *p) {
 
   if (isUnallocated(left_neighbor(head)) &&
       isUnallocated(right_neighbor(head))) {
-    left_neighbor(head)->size = TRUE_SIZE(left_neighbor(head)) + TRUE_SIZE(head) +
+    size_t new_size = TRUE_SIZE(left_neighbor(head)) + TRUE_SIZE(head) +
       TRUE_SIZE(right_neighbor(head)) + ALLOC_HEADER_SIZE * 2;
+    
     left_neighbor(head)->next = right_neighbor(head)->next;
     if (left_neighbor(head)->next != NULL) {
-      left_neighbor(head)->next->left_size = left_neighbor(head)->size;
+      left_neighbor(head)->next->left_size = new_size;
       left_neighbor(head)->next->prev = left_neighbor(head);
     }
     
+    left_neighbor(head)->size = new_size; 
     right_neighbor(head)->next = NULL;
     right_neighbor(head)->prev = NULL;
   }
@@ -471,7 +472,6 @@ void my_free(void *p) {
     right_neighbor(head)->left_size = left_neighbor(head)->size;
   }
   else if (isUnallocated(right_neighbor(head))) {
-    head->size = head->size + ALLOC_HEADER_SIZE + TRUE_SIZE(right_neighbor(head));
  
     /* Ensures that the right neighbor is not a fencepost after coalescing */
 
@@ -488,6 +488,8 @@ void my_free(void *p) {
     if (head->prev != NULL) {
       head->prev->next = head;
     }
+
+    head->size = head->size + ALLOC_HEADER_SIZE + TRUE_SIZE(right_neighbor(head));
   }
   else {
     insert_free_block(head);
