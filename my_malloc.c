@@ -106,6 +106,10 @@ static header *worst_fit(size_t size) {
     }
     current_block = current_block->next;
   }
+
+  //printf("\n\nWorst Fit\n\n");
+  //print_object(worst_fit);
+  //printf("\n\n");
   return worst_fit;
 } /* worst_fit() */
 
@@ -164,6 +168,7 @@ static void insert_free_block(header *h) {
 
   h->next = g_freelist_head;
   g_freelist_head = h;
+
 } /* insert_free_block() */
 
 /*
@@ -229,6 +234,10 @@ static size_t isUnallocated(header * head) {
 header* split_header(header* head, size_t needed_size) {
   header* new_header = (header *) (((char *) head) + ALLOC_HEADER_SIZE + needed_size);
   new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
+  insert_free_block(new_header);
+
+/*
+  new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
   
   if (head->prev == NULL) {
     new_header->prev = NULL;
@@ -253,7 +262,7 @@ header* split_header(header* head, size_t needed_size) {
     g_freelist_head->prev = NULL;
   }
   right_neighbor(new_header)->left_size = new_header->size;
-
+*/
 
   head->next = NULL;
   head->prev = NULL;
@@ -401,13 +410,36 @@ void *my_malloc(size_t requested_size) {
 
     found_header = find_header(needed_size);
   }
+/*  
+  printf("Before Splitting\n");
+  printf("Left Neighbor\n");
+  print_object(left_neighbor(found_header));
+  printf("head\n");
+  print_object(found_header);
+  printf("Right Neighbor\n");
+  print_object(right_neighbor(found_header));
+*/
 
   split_header(found_header, requested_size);
+  //insert_free_block(right_neighbor(found_header));
 
   /* Change the state of the found header to ALOOCATED */
 
   found_header->size = found_header->size | (state) ALLOCATED;
 
+ /* 
+  printf("After Splitting\n");
+  printf("Left Neighbor\n");
+  print_object(left_neighbor(found_header));
+  printf("head\n");
+  print_object(found_header);
+  printf("Right Neighbor\n");
+  print_object(right_neighbor(found_header));
+
+  printf("FREE LIST\n\n\n");
+  freelist_print(print_object);
+  printf("\n\n\n\n\n");
+*/
   pthread_mutex_unlock(&g_mutex);
   return &found_header->data;
 } /* my_malloc() */
