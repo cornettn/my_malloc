@@ -234,10 +234,6 @@ static size_t isUnallocated(header * head) {
 header* split_header(header* head, size_t needed_size) {
   header* new_header = (header *) (((char *) head) + ALLOC_HEADER_SIZE + needed_size);
   new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
-  insert_free_block(new_header);
-
-/*
-  new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
   
   if (head->prev == NULL) {
     new_header->prev = NULL;
@@ -262,7 +258,7 @@ header* split_header(header* head, size_t needed_size) {
     g_freelist_head->prev = NULL;
   }
   right_neighbor(new_header)->left_size = new_header->size;
-*/
+
 
   head->next = NULL;
   head->prev = NULL;
@@ -421,6 +417,9 @@ void *my_malloc(size_t requested_size) {
 */
 
   split_header(found_header, requested_size);
+
+  printf("Add This to head:\n");
+  print_object(right_neighbor(found_header));
   //insert_free_block(right_neighbor(found_header));
 
   /* Change the state of the found header to ALOOCATED */
