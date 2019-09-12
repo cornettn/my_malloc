@@ -206,6 +206,10 @@ static void init() {
 
 
 static size_t isUnallocated(header * head) {
+  if (head == NULL) {
+    return 0;
+  }
+
   if (TRUE_SIZE(head) == head->size) {
     return 1;
   }
@@ -423,15 +427,15 @@ void my_free(void *p) {
   header *head = (header *) (((char *) p) - ALLOC_HEADER_SIZE);
   
   /* Ensures that the block is not unallocated */
-
-  //printf("Before");
-  //printf("Left Neighbor\n");
-  //print_object(left_neighbor(head));
-  //printf("head\n");
-  //print_object(head);
-  //printf("Right Neighbor\n");
-  //print_object(right_neighbor(head));
-
+/*
+  printf("Before\n");
+  printf("Left Neighbor\n");
+  print_object(left_neighbor(head));
+  printf("head\n");
+  print_object(head);
+  printf("Right Neighbor\n");
+  print_object(right_neighbor(head));
+*/
   if (isUnallocated(head)) {
     assert(false);
   }
@@ -465,10 +469,21 @@ void my_free(void *p) {
   }
   else if (isUnallocated(right_neighbor(head))) {
     head->size = head->size + ALLOC_HEADER_SIZE + TRUE_SIZE(right_neighbor(head));
-    head->next = right_neighbor(head)->next;
-    if (right_neighbor(head)->next != NULL) {
-      right_neighbor(head)->next->left_size = head->size;
-      right_neighbor(head)->next->prev = head;
+ 
+    /* Ensures that the right neighbor is not a fencepost after coalescing */
+
+    if (isUnallocated(right_neighbor(head))) {
+      head->next = right_neighbor(head)->next;
+      head->prev = right_neighbor(head)->prev;
+
+      if (right_neighbor(head)->next != NULL) {
+        right_neighbor(head)->next->left_size = head->size;
+        right_neighbor(head)->next->prev = head;
+      }
+    }
+
+    if (head->prev != NULL) {
+      head->prev->next = head;
     }
   }
   else {
