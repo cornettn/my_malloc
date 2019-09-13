@@ -232,14 +232,17 @@ static size_t isUnallocated(header * head) {
  */
 
 header* split_header(header* head, size_t needed_size) {
-  header* new_header = (header *) (((char *) head) + ALLOC_HEADER_SIZE + needed_size);
-  new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
+
+  printf("Found Header\n");
+  print_object(head);
+  //printf("Needed Size: %ld\n", needed_size);
 
   /* If the size of the found_header is a perfect match or the remaining
    * memory after splitting is too small */
 
   if ((head->size == needed_size) ||
-      (new_header->size <= ALLOC_HEADER_SIZE + sizeof(header *) * 2)) {
+      ((TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE) <= 
+        ALLOC_HEADER_SIZE + sizeof(header *) * 2)) {
 
     /* Remove head from the Free List */
 
@@ -263,6 +266,11 @@ header* split_header(header* head, size_t needed_size) {
   }
 
   /* Split the header */
+  
+  header* new_header = (header *) (((char *) head) + ALLOC_HEADER_SIZE + needed_size);
+  printf("New Header\n");
+  print_object(new_header);
+  new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
   
   if (right_neighbor(head) != NULL) {
     right_neighbor(head)->left_size = needed_size;
@@ -465,15 +473,15 @@ void *my_malloc(size_t requested_size) {
   print_object(right_neighbor(found_header));
 */
 
-  printf("FREE LIST BEFORE\n");
-  freelist_print(print_object);
+//  printf("FREE LIST BEFORE\n");
+//  freelist_print(print_object);
 
   split_header(found_header, requested_size);
 
   found_header->size = found_header->size | (state) ALLOCATED;
 
-  printf("FREE LIST AFTER\n");
-  freelist_print(print_object);
+//  printf("FREE LIST AFTER\n");
+//  freelist_print(print_object);
   /* Change the state of the found header to ALOOCATED */
 
 
