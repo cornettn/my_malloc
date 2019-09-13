@@ -240,7 +240,6 @@ header* split_header(header* head, size_t needed_size) {
 
   if ((head->size == needed_size) ||
       (new_header->size <= ALLOC_HEADER_SIZE + sizeof(header *) * 2)) {
-    return head;
 
     /* Remove head from the Free List */
 
@@ -256,10 +255,35 @@ header* split_header(header* head, size_t needed_size) {
         g_freelist_head->prev = NULL;
       }
     }
+   
+    head->next = NULL;
+    head->prev = NULL;
+
+    return head;
   }
 
   /* Split the header */
+  
+  if (right_neighbor(head) != NULL) {
+    right_neighbor(head)->left_size = needed_size;
+  }
 
+  if (head != g_freelist_head) {
+    head->prev->next = head->next;
+  }
+  else {
+    g_freelist_head = head->next;
+  }
+
+  if (head->next != NULL) {
+    head->next->prev = head->prev;
+  }
+
+  head->size = needed_size;
+  new_header->left_size = needed_size;
+  insert_free_block(new_header);
+
+  /*
   if (head->prev == NULL) {
     new_header->prev = NULL;
   }
@@ -283,7 +307,7 @@ header* split_header(header* head, size_t needed_size) {
     g_freelist_head->prev = NULL;
   }
   right_neighbor(new_header)->left_size = new_header->size;
-
+*/
 
   head->next = NULL;
   head->prev = NULL;
@@ -441,11 +465,17 @@ void *my_malloc(size_t requested_size) {
   print_object(right_neighbor(found_header));
 */
 
+  printf("FREE LIST BEFORE\n");
+  freelist_print(print_object);
+
   split_header(found_header, requested_size);
 
+  found_header->size = found_header->size | (state) ALLOCATED;
+
+  printf("FREE LIST AFTER\n");
+  freelist_print(print_object);
   /* Change the state of the found header to ALOOCATED */
 
-  found_header->size = found_header->size | (state) ALLOCATED;
 
  /* 
   printf("After Splitting\n");
@@ -490,7 +520,6 @@ void my_free(void *p) {
 */
 
   if (isUnallocated(head)) {
-    return
     assert(false);
     exit(1);
   }
