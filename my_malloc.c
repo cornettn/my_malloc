@@ -233,8 +233,8 @@ static size_t isUnallocated(header * head) {
 
 header* split_header(header* head, size_t needed_size) {
 
-  printf("Found Header\n");
-  print_object(head);
+  //printf("Found Header\n");
+  //print_object(head);
   //printf("Needed Size: %ld\n", needed_size);
 
   /* If the size of the found_header is a perfect match or the remaining
@@ -268,16 +268,23 @@ header* split_header(header* head, size_t needed_size) {
   /* Split the header */
   
   header* new_header = (header *) (((char *) head) + ALLOC_HEADER_SIZE + needed_size);
-  printf("New Header\n");
-  print_object(new_header);
+//  printf("New Header\n");
+//  print_object(new_header);
   new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
+  
+//  printf("split_header: right_neighbor: \n");
+//  print_object(right_neighbor(head));
   
   if (right_neighbor(head) != NULL) {
     right_neighbor(head)->left_size = needed_size;
   }
 
-  if (head != g_freelist_head) {
-    head->prev->next = head->next;
+  if (right_neighbor(new_header) != NULL) {
+    right_neighbor(new_header)->left_size = new_header->size;
+  }
+
+  if (head != g_freelist_head && head->prev != NULL) {
+   head->prev->next = head->next;
   }
   else {
     g_freelist_head = head->next;
@@ -364,7 +371,7 @@ header* get_more_mem(size_t needed_mem_size) {
     size += ARENA_SIZE;
   }
   
-  //printf("needed_mem_size: %ld\nsize: %ld\n", needed_mem_size, size);
+ // printf("needed_mem_size: %ld\nsize: %ld\n", needed_mem_size, size);
   void* location = sbrk(size);
   
   /* Ensures that more mem was created */
@@ -385,11 +392,19 @@ header* get_more_mem(size_t needed_mem_size) {
     /* If statement ensures that there has been more than one call to
      * sbrk() so there should be multiple set of fenceposts. */
 
-    // TODO: Make a function for coalescing
-
     header* possible_fencepost = location - ALLOC_HEADER_SIZE;
+  
+//    printf("Last Fencepost:\n");
+//    print_object(g_last_fence_post);
+//    printf("Possible Fencepost:\n");
+//    print_object(possible_fencepost);
+
     if (possible_fencepost == g_last_fence_post) {
       header* left_header = left_neighbor(g_last_fence_post);
+      
+//      printf("Left Neighbor of fencepost: \n");
+//      print_object(left_neighbor(possible_fencepost));
+
       left_header->size = left_header->size + size;
       g_last_fence_post = location + size - ALLOC_HEADER_SIZE;
       return left_header;
