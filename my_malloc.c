@@ -74,6 +74,13 @@ static header *first_fit(size_t size) {
 
 static header *next_fit(size_t size) {
   header* current_block = g_next_allocate;
+  if (current_block == NULL) {
+    current_block = g_freelist_head;
+    if (current_block == NULL) {
+      return NULL;
+    }
+  }
+
   do {
     if (TRUE_SIZE(current_block) >= size) {
       return current_block;
@@ -219,6 +226,7 @@ static void set_fenceposts(void *mem, size_t size) {
 
 static void init() {
   g_freelist_head = NULL;
+  g_next_allocate = g_freelist_head;
 
   /* Initialize mutex for thread safety */
 
