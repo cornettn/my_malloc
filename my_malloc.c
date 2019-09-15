@@ -603,25 +603,54 @@ void my_free(void *p) {
 
   if (isUnallocated(left_neighbor(head)) &&
       isUnallocated(right_neighbor(head))) {
+
+    /* Coalesce with left and right neighbors */
+    
+
+    if (right_neighbor(head) == g_next_allocate) {
+      g_next_allocate = left_neighbor(head);
+    }
+
     size_t new_size = TRUE_SIZE(left_neighbor(head)) + TRUE_SIZE(head) +
       TRUE_SIZE(right_neighbor(head)) + ALLOC_HEADER_SIZE * 2;
-    
-    left_neighbor(head)->next = right_neighbor(head)->next;
-    if (left_neighbor(head)->next != NULL) {
-      left_neighbor(head)->next->left_size = new_size;
-      left_neighbor(head)->next->prev = left_neighbor(head);
+   
+
+    /* This tests to see where to put the coalesced block in the free list */
+
+    if (left_neighbor(head)->next == right_neighbor(head)) {
+      left_neighbor(head)->next = right_neighbor(head)->next;
+      if (left_neighbor(head)->next != NULL) {
+        left_neighbor(head)->next->left_size = new_size;
+        left_neighbor(head)->next->prev = left_neighbor(head);
+      }
     }
-    
+    else {
+      if (right_neighbor(head)->prev != NULL) {
+        right_neighbor(head)->prev->next = left_neighbor(head);
+      }
+      left_neighbor(head)->prev = right_neighbor(head)->prev;
+    }
+     
     left_neighbor(head)->size = new_size; 
     right_neighbor(head)->next = NULL;
     right_neighbor(head)->prev = NULL;
   }
   else if (isUnallocated(left_neighbor(head))) {
+    
+    /* Coalesce with just the left neighbor  */
+    
     left_neighbor(head)->size = TRUE_SIZE(left_neighbor(head)) + TRUE_SIZE(head) +
       + ALLOC_HEADER_SIZE;
     right_neighbor(head)->left_size = left_neighbor(head)->size;
   }
   else if (isUnallocated(right_neighbor(head))) {
+    
+    /* Coalesce with the right neighbor  */
+    
+    if (right_neighbor(head) == g_next_allocate) {
+      g_next_allocate = head;
+    }
+    
     head->next = right_neighbor(head)->next;
     head->prev = right_neighbor(head)->prev;
 
@@ -640,6 +669,9 @@ void my_free(void *p) {
     head->size = head->size + ALLOC_HEADER_SIZE + TRUE_SIZE(right_neighbor(head));
   }
   else {
+
+    /* Neither neighbor is unallocated, so just add to free list */
+
     insert_free_block(head);
   }
   pthread_mutex_unlock(&g_mutex);
