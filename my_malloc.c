@@ -125,7 +125,10 @@ static header *best_fit(size_t size) {
     }
     current_block = current_block->next;
   }
-  return best_fit;
+  if (best_fit-> size >= size) {
+    return best_fit;
+  }
+  return NULL;
 } /* best_fit() */
 
 /*
@@ -148,7 +151,10 @@ static header *worst_fit(size_t size) {
   //printf("\n\nWorst Fit\n\n");
   //print_object(worst_fit);
   //printf("\n\n");
-  return worst_fit;
+  if (worst_fit->size >= size) {
+    return worst_fit;
+  }
+  return NULL;
 } /* worst_fit() */
 
 /*
@@ -318,6 +324,8 @@ header* split_header(header* head, size_t needed_size) {
   header* new_header = (header *) (((char *) head) + ALLOC_HEADER_SIZE + needed_size);
 //  printf("New Header\n");
 //  print_object(new_header);
+//  printf("head\n");
+//  print_object(head);
   new_header->size = TRUE_SIZE(head) - needed_size - ALLOC_HEADER_SIZE;
   
 //  printf("split_header: right_neighbor: \n");
