@@ -73,9 +73,21 @@ static header *first_fit(size_t size) {
  */
 
 static header *next_fit(size_t size) {
-  (void) size;
-  assert(false);
-  exit(1);
+  header* current_block = g_next_allocate;
+  do {
+    if (TRUE_SIZE(current_block) >= size) {
+      return current_block;
+    }
+
+    /* Iterate to the next block */
+
+    current_block = current_block->next;
+    if (current_block == NULL) {
+      current_block = g_freelist_head;
+    }
+
+  } while (current_block != g_next_allocate);
+  return NULL;
 } /* next_fit() */
 
 /*
@@ -85,9 +97,18 @@ static header *next_fit(size_t size) {
  */
 
 static header *best_fit(size_t size) {
-  (void) size;
-  assert(false);
-  exit(1);
+  header *best_fit = g_freelist_head;
+  header *current_block = g_freelist_head;
+  while (current_block != NULL) {
+    size_t curr_size = TRUE_SIZE(current_block);
+    if ( curr_size >= size ) {
+      if (curr_size < best_fit->size) {
+        best_fit = current_block;
+      }
+    }
+    current_block = current_block->next;
+  }
+  return best_fit;
 } /* best_fit() */
 
 /*
@@ -236,6 +257,10 @@ header* split_header(header* head, size_t needed_size) {
   //printf("Found Header\n");
   //print_object(head);
   //printf("Needed Size: %ld\n", needed_size);
+
+  /* Set the next_allocate block for the next_fit function */
+
+  g_next_allocate = head->next;
 
   /* If the size of the found_header is a perfect match or the remaining
    * memory after splitting is too small */
