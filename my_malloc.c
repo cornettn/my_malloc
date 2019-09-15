@@ -77,11 +77,21 @@ static header *next_fit(size_t size) {
   if (current_block == NULL) {
     current_block = g_freelist_head;
     if (current_block == NULL) {
+//      printf("Everything is NULL\n");
       return NULL;
     }
   }
 
+  header * starting_block = current_block;
+
   do {
+//    printf("next_allocate:\n");
+//    if (g_next_allocate != NULL) {
+//    //      print_object(g_next_allocate);
+//    } else { printf("NULL\n"); }
+
+//    printf("current_block:\n");
+//    print_object(current_block);
     if (TRUE_SIZE(current_block) >= size) {
       return current_block;
     }
@@ -93,7 +103,7 @@ static header *next_fit(size_t size) {
       current_block = g_freelist_head;
     }
 
-  } while (current_block != g_next_allocate);
+  } while (current_block != starting_block);
   return NULL;
 } /* next_fit() */
 
@@ -226,7 +236,6 @@ static void set_fenceposts(void *mem, size_t size) {
 
 static void init() {
   g_freelist_head = NULL;
-  g_next_allocate = g_freelist_head;
 
   /* Initialize mutex for thread safety */
 
