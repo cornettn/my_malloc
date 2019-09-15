@@ -181,14 +181,20 @@ static inline header *right_neighbor(header *h) {
  */
 
 static void insert_free_block(header *h) {
+//  printf("Insert\n");
+//  print_object(h);
+//  printf("Into\n");
   h->prev = NULL;
 
-  if (g_freelist_head != NULL) {
-    g_freelist_head->prev = h;
-  }
+  if (h != g_freelist_head) {
+    if (g_freelist_head != NULL) {
+      //freelist_print(print_object);
+      g_freelist_head->prev = h;
+    }
 
-  h->next = g_freelist_head;
-  g_freelist_head = h;
+    h->next = g_freelist_head;
+    g_freelist_head = h;
+  }
 
 } /* insert_free_block() */
 
@@ -315,7 +321,7 @@ header* split_header(header* head, size_t needed_size) {
     g_freelist_head = head->next;
   }
 
-  if (head->next != NULL) {
+  if ((head->next != NULL) && (head->next != g_freelist_head)) {
     head->next->prev = head->prev;
   }
 
@@ -352,6 +358,12 @@ header* split_header(header* head, size_t needed_size) {
   head->next = NULL;
   head->prev = NULL;
   head->size = needed_size;
+  
+//  printf("split_header:\n\thead:\n");
+//  print_object(head);
+//  printf("\tnew_header\n");
+//  print_object(new_header);
+
   return new_header;
 } /* split_header()  */
 
@@ -503,41 +515,42 @@ void *my_malloc(size_t requested_size) {
 
     found_header = find_header(needed_size);
   }
-/*  
-  printf("Before Splitting\n");
-  printf("Left Neighbor\n");
-  print_object(left_neighbor(found_header));
-  printf("head\n");
-  print_object(found_header);
-  printf("Right Neighbor\n");
-  print_object(right_neighbor(found_header));
-*/
+  
+//  printf("Before Splitting\n");
+//  printf("Left Neighbor\n");
+//  print_object(left_neighbor(found_header));
+//  printf("head\n");
+//  print_object(found_header);
+//  printf("Right Neighbor\n");
+//  print_object(right_neighbor(found_header));
 
-//  printf("FREE LIST BEFORE\n");
+
+//  printf("FREE LIST BEFORE SPLITTING\n");
 //  freelist_print(print_object);
 
   split_header(found_header, requested_size);
 
   found_header->size = found_header->size | (state) ALLOCATED;
 
-//  printf("FREE LIST AFTER\n");
+//  printf("FREE LIST AFTER SPLITTING\n");
 //  freelist_print(print_object);
+
   /* Change the state of the found header to ALOOCATED */
 
 
- /* 
-  printf("After Splitting\n");
-  printf("Left Neighbor\n");
-  print_object(left_neighbor(found_header));
-  printf("head\n");
-  print_object(found_header);
-  printf("Right Neighbor\n");
-  print_object(right_neighbor(found_header));
+  
+//  printf("After Splitting\n");
+//  printf("Left Neighbor\n");
+//  print_object(left_neighbor(found_header));
+//  printf("head\n");
+//  print_object(found_header);
+//  printf("Right Neighbor\n");
+//  print_object(right_neighbor(found_header));
 
-  printf("FREE LIST\n\n\n");
-  freelist_print(print_object);
-  printf("\n\n\n\n\n");
-*/
+//  printf("FREE LIST\n\n\n");
+//  freelist_print(print_object);
+//  printf("\n\n\n\n\n");
+
   pthread_mutex_unlock(&g_mutex);
   return &found_header->data;
 } /* my_malloc() */
@@ -557,15 +570,15 @@ void my_free(void *p) {
   header *head = (header *) (((char *) p) - ALLOC_HEADER_SIZE);
   
   /* Ensures that the block is not unallocated */
-/*
-  printf("Before\n");
-  printf("Left Neighbor\n");
-  print_object(left_neighbor(head));
-  printf("head\n");
-  print_object(head);
-  printf("Right Neighbor\n");
-  print_object(right_neighbor(head));
-*/
+
+//  printf("Before\n");
+//  printf("Left Neighbor\n");
+//  print_object(left_neighbor(head));
+//  printf("head\n");
+//  print_object(head);
+//  printf("Right Neighbor\n");
+//  print_object(right_neighbor(head));
+
 
   if (isUnallocated(head)) {
     assert(false);
